@@ -1,0 +1,20 @@
+
+
+        tree = new google.visualization.TreeMap(document.getElementById('chart_div'));
+
+        tree.draw(data, {
+        	highlightOnMouseOver: true,
+         	tooltip: { isHtml: true },
+          minColor: '#0d0',
+          midColor: '#ddd',
+          maxColor: '#f00',
+          	maxDepth: 10000,
+          	headerHeight: 15,
+          	fontColor: 'black',
+          	minHighlightColor: '#8c6bb1',
+		  	midHighlightColor: '#8c6bb1',
+          	maxHighlightColor: '#8c6bb1',
+          	showScale: false,
+          	generateTooltip: showStaticTooltip
+        });
+

@@ -1,0 +1,253 @@
+
+var method = "GET";
+
+// You REALLY want async = true.
+// Otherwise, it'll block ALL execution waiting for server response.
+var async = true;
+
+var request = new XMLHttpRequest();
+
+// Before we send anything, we first have to say what we will do when the
+// server responds. This seems backwards (say how we'll respond before we send
+// the request? huh?), but that's how Javascript works.
+// This function attached to the XMLHttpRequest "onload" property specifies how
+// the HTTP response will be handled. 
+request.onload = function () {
+
+   // Because of javascript's fabulous closure concept, the XMLHttpRequest "request"
+   // object declared above is available in this function even though this function
+   // executes long after the request is sent and long after this function is
+   // instantiated. This fact is CRUCIAL to the workings of XHR in ordinary
+   // applications.
+
+   // You can get all kinds of information about the HTTP response.
+   var status = request.status; // HTTP response status, e.g., 200 for "200 OK"
+   var data = request.responseText; // Returned data, e.g., an HTML document.
+}
+
+
+
+var chord = d3.layout.chord()
+    .padding(.01)
+    .sortSubgroups(d3.descending)
+    .matrix(matrix);
+
+var width = 700,
+    height = 700,
+    innerRadius = Math.min(width, height) * .41,
+    outerRadius = innerRadius * 1.1;
+
+var n = 0;
+
+var fill = function(d) {
+        if (d.index === 0) return '#ccc';
+        var cc = d;
+        n++;
+        return "hsl(" + parseInt(((cc - 80) / 30) * 760, 10) + ",70%,35%)";
+      };
+
+var cont = -1;
+var estadoMouse = 0;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width+600)
+    .attr("height", height+600)
+  .append("g")
+    .attr("transform", "translate(" + width / 1.1 + "," + height / 1.1 + ")");
+
+svg.append("g")
+    .attr("class", "raio")
+    .selectAll("path")
+    .data(chord.groups)
+  .enter().append("path")
+    .attr("class", "represent_classe")
+    .style("fill", function(d) {return fill(cores[d.index]); })
+    .style("stroke", function(d) { return fill(cores[d.index]); })
+    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+    .on("dblclick", clique())
+    .on("mouseover", fade(.1))
+    .on("mouseout", fade(1));
+
+
+    
+
+var ticks = svg.append("g").selectAll("g")
+    .data(chord.groups)
+  .enter().append("g").selectAll("g")
+    .data(groupTicks)
+  .enter().append("g")
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+          + "translate(" + outerRadius + ",3)";
+    });
+
+ticks.append("line")
+    .attr("x1", 1)
+    .attr("y1", 0)
+    .attr("x2", 6)
+    .attr("y2", 0)
+    .style("stroke", "#000");
+var idCount = 0;
+
+ticks.append("text")
+    .attr("class", "nomes_classes")
+    .attr("font-size", "14px") 
+    .attr("x", 8)
+    .attr("id", function() { var x = idCount; idCount++; return x })
+    .attr("dy", "0.35em")
+    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
+    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .text(function(d) { return d.label; });
+    
+
+svg.append("g")
+    .attr("class", "chord")
+  .selectAll("path")
+    .data(chord.chords)
+  .enter().append("path")
+    .attr("d", d3.svg.chord().radius(innerRadius))
+    .style("fill", function(d) { return fill(cores[d.target.index]); })
+
+    
+
+// Returns an array of tick angles and labels, given a group.
+function groupTicks(d) {
+  var k = (d.endAngle - d.startAngle) / d.value;
+  return d3.range(1, d.value, 1000).map(function(v, i) {
+    return {
+      angle: v * k + d.startAngle,
+      label: i % 5 ? null : names[d.index]
+    };
+  });
+}
+
+
+// Returns an event handler for fading a given chord group.
+function fade(opacity) {
+return function(g, i) {
+    var newOp = 1;
+    if(opacity != 1)  newOp = 0.6;
+ 
+    svg.selectAll(".chord path")
+      .transition()
+        .style("opacity", 1);  
+    svg.selectAll('.represent_classe')
+        .transition()
+          .style("opacity", 1); 
+
+
+
+
+    svg.selectAll(".chord path")
+        .filter(function(d) { 
+        return d.source.index != i && d.target.index != i; 
+      })
+      .transition()
+        .style("opacity", opacity);
+
+       var groups = [];
+          svg.selectAll(".chord path")
+              .filter(function(d) {
+                if (d.source.index == i) {
+                  groups.push(d.target.index);
+                }
+                if (d.target.index == i) {
+                  groups.push(d.source.index);
+                }
+              });
+          groups.push(i);
+          var length = groups.length;
+          svg.selectAll('.represent_classe')
+              .filter(function(d) {
+                for (var i = 0; i < length; i++) {
+                  if(groups[i] == d.index) return false;
+                }
+                return true;
+              })
+              .transition()
+                .style("opacity", opacity);  
+
+          svg.selectAll('.represent_classe')
+              .filter(function(d) {
+                for (var j = 0; j < length; j++) {
+                  if(groups[j] == d.index && d.index != i) return true;
+                }
+              })
+              .transition()
+                .style("opacity", newOp);  
+  };
+}
+
+
+alertNaoReferenciado();
+
+function alertNaoReferenciado()
+{
+    var naoUtilizados = "";
+    for(var i = 0; i < matrix.length; i++)
+    {
+        var elemento = matrix[i];
+        var isolado = true;
+        for(var j = 0; j < elemento.length; j++)
+        {
+            if(elemento[j] != 0) isolado = false;
+        }
+        if(isolado)
+        {
+            naoUtilizados += names[i]+"\n";
+        }
+    };
+
+    if(naoUtilizados.length > 0 ) alert("Classes ou Interfaces sem referências: \n\n" + naoUtilizados);
+};
+
+
+var optArray = [];
+for (var i = 0; i < names.length; i++) {
+    optArray.push(names[i]);
+}
+optArray = optArray.sort();
+(function () {
+    $("#search").autocomplete({
+        source: optArray
+    });
+});
+
+function clique() {
+  
+  return function(g, i) {
+ 
+    svg.selectAll(".represent_classe")
+        .filter(function(d) { 
+            request = new XMLHttpRequest();
+            var params = "data="+caminhos[i];
+            request.open(method, url+"?"+params, async);
+
+            request.send();
+
+            return d.source.index != i && d.target.index != i; 
+      })
+  };
+  
+}
+
+function searchNode() {
+    //find the node
+    var selectedVal = document.getElementById('search').value;
+    var posicao = optArray.indexOf(selectedVal);
+
+    var node = svg.selectAll(".chords");
+    if (selectedVal == "none") {
+        node.style("stroke", "white").style("stroke-width", "1");
+    } else {
+        svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index != i && d.target.index != i; })
+      .transition()
+        .style("opacity", .1);
+    }
+}
+});
+
+    </script>
+</body>
+</html>

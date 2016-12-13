@@ -1,0 +1,32 @@
+
+root { 
+    display: block;
+}
+
+.divbotao {
+    text-align: left;
+}
+
+.button {
+    top: 50%;
+}
+
+#chart {
+  font: 1px sans-serif;
+  float: left;
+  text-align: center;
+
+}
+
+.chord path {
+  fill-opacity: .50;
+  stroke: #000;
+  stroke-width: .1px;
+}
+
+svg {
+  float: left;
+  text-align: center;
+  background: #eee;
+  background-size: 100% 100%;
+}

@@ -1,0 +1,242 @@
+
+var method = "GET";
+
+// You REALLY want async = true.
+// Otherwise, it'll block ALL execution waiting for server response.
+var async = true;
+
+var request = new XMLHttpRequest();
+
+// Before we send anything, we first have to say what we will do when the
+// server responds. This seems backwards (say how we'll respond before we send
+// the request? huh?), but that's how Javascript works.
+// This function attached to the XMLHttpRequest "onload" property specifies how
+// the HTTP response will be handled. 
+request.onload = function () {
+
+   // Because of javascript's fabulous closure concept, the XMLHttpRequest "request"
+   // object declared above is available in this function even though this function
+   // executes long after the request is sent and long after this function is
+   // instantiated. This fact is CRUCIAL to the workings of XHR in ordinary
+   // applications.
+
+   // You can get all kinds of information about the HTTP response.
+   var status = request.status; // HTTP response status, e.g., 200 for "200 OK"
+   var data = request.responseText; // Returned data, e.g., an HTML document.
+}
+
+
+
+var chord = d3.layout.chord()
+    .padding(.005)
+    .sortSubgroups(d3.descending)
+    .matrix(matrix);
+
+var width = 700,
+    height = 700,
+    innerRadius = Math.min(width, height) * .41,
+    outerRadius = innerRadius * 1.1;
+
+var fill = d3.scale.ordinal()
+    .domain(d3.range(41))
+    .range(['#000000', 
+'#0000FF', 
+'#8A2BE2', 
+'#A52A2A', 
+'#DEB887', 
+'#5F9EA0', 
+'#D2691E', 
+'#FF7F50', 
+'#6495ED', 
+'#DC143C', 
+'#00008B', 
+'#008B8B', 
+'#B8860B', 
+'#A9A9A9', 
+'#006400', 
+'#BDB76B', 
+'#8B008B', 
+'#556B2F', 
+'#FF8C00', 
+'#9932CC', 
+'#8B0000', 
+'#E9967A', 
+'#8FBC8F', 
+'#483D8B', 
+'#2F4F4F', 
+'#00CED1', 
+'#9400D4', 
+'#FF1493', 
+'#00BFFF', 
+'#696969', 
+'#1E90FF', 
+'#B22222', 
+'#228B22', 
+'#FF00FF', 
+'#DAA520', 
+'#008000', 
+'#FF69B4', 
+'#CD5C5C', 
+'#4B0082',  
+'#F08080', 
+'#778899', 
+'#3CB371']);
+
+var cont = -1;
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width+600)
+    .attr("height", height+600)
+  .append("g")
+    .attr("transform", "translate(" + width / 1.1 + "," + height / 1.1 + ")");
+
+svg.append("g")
+    .attr("class", "raio")
+    .selectAll("path")
+    .data(chord.groups)
+  .enter().append("path")
+    .attr("class", "represent_classe")
+    .style("fill", function(d) {return fill(cores[d.index]); })
+    .style("stroke", function(d) { return fill(cores[d.index]); })
+    .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+    .on("click", clique())
+    .on("mouseover", fade(.1))
+    .on("mouseout", fade(1));
+
+    
+
+var ticks = svg.append("g").selectAll("g")
+    .data(chord.groups)
+  .enter().append("g").selectAll("g")
+    .data(groupTicks)
+  .enter().append("g")
+    .attr("transform", function(d) {
+      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+          + "translate(" + outerRadius + ",0)";
+    });
+
+ticks.append("line")
+    .attr("x1", 1)
+    .attr("y1", 0)
+    .attr("x2", 6)
+    .attr("y2", 0)
+    .style("stroke", "#000");
+
+
+ticks.append("text")
+    .attr("font-size", "14px") 
+    .attr("x", 8)
+    .attr("dy", "0.35em")
+    .attr("transform", function(d) { return d.angle > Math.PI ? "rotate(180)translate(-16)" : null; })
+    .style("text-anchor", function(d) { return d.angle > Math.PI ? "end" : null; })
+    .attr("id", function(d){ return d.index})
+    .style("opacity", 1)
+    .text(function(d) { return d.label; });
+    
+
+svg.append("g")
+    .attr("class", "chord")
+  .selectAll("path")
+    .data(chord.chords)
+  .enter().append("path")
+    .attr("d", d3.svg.chord().radius(innerRadius))
+    .style("fill", function(d) { return fill(cores[d.target.index]); })
+    
+
+// Returns an array of tick angles and labels, given a group.
+function groupTicks(d) {
+  var k = (d.endAngle - d.startAngle) / d.value;
+  return d3.range(1, d.value, 1000).map(function(v, i) {
+    return {
+      angle: v * k + d.startAngle,
+      label: i % 5 ? null : names[d.index]
+    };
+  });
+}
+
+// Returns an event handler for fading a given chord group.
+function fade(opacity) {
+  return function(g, i) {
+ 
+    svg.selectAll(".chord path")
+        .filter(function(d) { 
+        return d.source.index != i && d.target.index != i; 
+      })
+      .transition()
+        .style("opacity", opacity);
+  };
+}
+
+
+alertNaoReferenciado();
+
+function alertNaoReferenciado()
+{
+    var naoUtilizados = [];
+    for(var i = 0; i < matrix.length; i++)
+    {
+        var elemento = matrix[i];
+        var isolado = true;
+        for(var j = 0; j < elemento.length; j++)
+        {
+            if(elemento[j] != 0) isolado = false;
+        }
+        if(isolado)
+        {
+            naoUtilizados.push(names[i]);
+        }
+    };
+
+    if(naoUtilizados.length > 0 ) alert("Classes ou Interfaces sem referências: \n" + naoUtilizados);
+};
+
+
+var optArray = [];
+for (var i = 0; i < names.length; i++) {
+    optArray.push(names[i]);
+}
+optArray = optArray.sort();
+(function () {
+    $("#search").autocomplete({
+        source: optArray
+    });
+});
+
+function clique() {
+  
+  return function(g, i) {
+ 
+    svg.selectAll(".represent_classe")
+        .filter(function(d) { 
+            request = new XMLHttpRequest();
+            var params = "data="+caminhos[i];
+            request.open(method, url+"?"+params, async);
+
+            request.send();
+
+            return d.source.index != i && d.target.index != i; 
+      })
+  };
+  
+}
+
+function searchNode() {
+    //find the node
+    var selectedVal = document.getElementById('search').value;
+    var posicao = optArray.indexOf(selectedVal);
+
+    var node = svg.selectAll(".chords");
+    if (selectedVal == "none") {
+        node.style("stroke", "white").style("stroke-width", "1");
+    } else {
+        svg.selectAll(".chord path")
+        .filter(function(d) { return d.source.index != i && d.target.index != i; })
+      .transition()
+        .style("opacity", .1);
+    }
+}
+});
+
+    </script>
+</body>
+
